@@ -25,7 +25,14 @@ main{max-width:900px;margin:0 auto;padding:0 10px 40px}
 .box{background:#fbf5ee;border-radius:10px;padding:10px;margin-top:6px;font-size:.9rem}
 select,input[type=text]{width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);font-size:.95rem;margin:4px 0}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn.p{background:var(--acc);color:#fff;border-color:var(--acc)}
-.shop label{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line)}.shop input:checked+span{text-decoration:line-through;color:var(--mut)}
+.shop h4{margin:12px 0 2px;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.si{display:flex;gap:6px;align-items:center;min-height:46px;border-bottom:1px dashed var(--line)}
+.si input[type=checkbox]{width:24px;height:24px;flex:none;accent-color:var(--acc);margin:0 4px}
+.si .st{flex:1;padding:10px 4px;cursor:pointer}.si.done .st{text-decoration:line-through;color:var(--mut)}
+.si .st small{color:var(--acc);font-size:.7rem;margin-left:4px}
+.ib{min-width:44px;min-height:44px;border:none;background:none;font-size:1.05rem;color:var(--mut);cursor:pointer;border-radius:10px}.ib:active{background:#f6ebdf}
+.sef{background:#fbf5ee;border-radius:10px;padding:8px;margin:6px 0;display:grid;grid-template-columns:2fr 1fr;gap:6px}
+.sef input,.sef select{min-height:44px;font-size:16px;margin:0}.sef .full{grid-column:1/-1}.sef .row{grid-column:1/-1;margin-top:2px}.sef .btn{min-height:44px}
 .legend{display:flex;gap:12px;justify-content:center;font-size:.78rem;color:var(--mut);flex-wrap:wrap}.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px}
 </style></head><body>
 <header><h1>🥣 Little Bites</h1><div class="sub" id="age"></div></header>
@@ -146,9 +153,9 @@ function prep(m,i){const cnt={};days(m).forEach(d=>KEYS.forEach(k=>{const x=meal
   const line=`<li><b>${r.name}</b> × ${n} portion${n>1?'s':''}${r.t==='blw'?' (≈'+n*3+' fingers)':''}${r.t==='stew'?' — lunch':''}${r.t==='porridge'?' — dinner':''}</li>`;
   if(r.t==='porridge'||r.t==='stew')sat.push(line);else if(r.t==='blw')sun.push(line);else (batchable?sun:fresh).push(line)});
  const wk=iso(m);
- const shop=Object.entries(tot).sort().map(([it,q])=>{const key=wk+'|'+it;const qq=Math.ceil(q*10)/10;return `<label><input type="checkbox" ${checks[key]?'checked':''} onchange="ck('${esc(key)}',this.checked)"><span>${esc(it.replace(/\s*\(.*\)/,''))}: <b>${qq}</b> ${(it.match(/\((.*)\)/)||['',''])[1]}</span></label>`}).join('');
+ GEN[wk]=tot;const shop=shopHTML(wk);
  const satD=new Date(m);satD.setDate(satD.getDate()-2);
- return `<div class="day"><h3 style="margin-top:0">🛒 Shopping list (week of ${fmt(m,{day:'numeric',month:'short'})})</h3><p class="sub">${satD<today?'Shopping done — top up fresh fruit/veg midweek.':'Shop by '+fmt(satD)+' (the weekend before).'} Amounts are totals for the week (+ a little extra for spills). Ticks are saved.</p><div class="shop">${shop}</div><div class="row"><button class="btn" onclick="clearCk('${wk}')">Untick all</button></div></div>
+ return `<div class="day"><h3 style="margin-top:0">🛒 Shopping list (week of ${fmt(m,{day:'numeric',month:'short'})})</h3><p class="sub">${satD<today?'Shopping done — top up fresh fruit/veg midweek.':'Shop by '+fmt(satD)+' (the weekend before).'} Amounts are totals for the week (+ a little extra for spills). Ticks are saved.</p><p class="sub">Tap an item to edit it · ✕ to remove.</p><div class="shop" id="shop">${shop}</div><div class="row"><button class="btn" onclick="clearCk('${wk}')">Untick all</button><button class="btn" onclick="shReset('${wk}')">↺ Reset to generated list</button></div></div>
  <div class="day"><h3 style="margin-top:0">🧊 This week's batch cook</h3><p class="sub">One stew (lunch) + one porridge (dinner), 7 portions each. Portions = times served.</p><h3>🍲 Saturday — stew + porridge</h3><ol style="padding-left:20px">${sat.join('')}</ol><div class="box">Stew: one pot on the stove or pressure cooker. Porridge: 1¾ cups rice + 8× water (~1 hr or slow cooker), then add the protein & veg. Cool within 1 hr, freeze in 150 ml lidded pots or silicone cube trays (≈ 4–5 cubes/meal). Label with name + date. Move tomorrow's portion to the fridge each night.</div></div>
  <div class="day"><h3 style="margin-top:0">🥚 Sunday — finger-food side (freezer)</h3><ol style="padding-left:20px">${sun.join('')}</ol><div class="box">Mix each patty batch in one bowl; shape finger-sized logs (≈ 6–7 cm long, 1.5 cm thick). Bake trays together at 190°C. Open-freeze on a lined tray 2 hrs, then transfer to labelled zip bags (stops sticking). </div></div>
  <div class="day"><h3 style="margin-top:0">🌅 Fresh sides & breakfasts (no batch)</h3><ol style="padding-left:20px">${fresh.join('')||'<li>—</li>'}</ol><div class="box">Hard-boiled eggs can be boiled 3 at a time and kept in the fridge up to 3 days. Fruit, avocado, toast and steamed veg take under 10 min.</div></div>
@@ -163,6 +170,28 @@ function bsave(){const {p,v,name}=bmk();const key=document.getElementById('bdd')
 R.push(mkB(p,v));byId[id]=R[R.length-1];store[key]={id};save();go('w'+(new Date(key.split('|')[0]+'T00:00')>=weeks[1]?1:0))}
 function mkB(p,v){return {id:'c_'+p+'_'+v,t:'porridge',custom:1,pr:p,vg:v,name:`${p} & ${v.toLowerCase()} congee`,ing:[['rice (cups uncooked)',0.25],[PROT[p][0],PROT[p][1]],[VEG[v][0],VEG[v][1]]],steps:['Simmer rice with 8× water ~45 min until creamy.',PROT[p][2],VEG[v][2],'Optional: ½ tsp oil/butter for calories.'],freeze:'~4 portions; freeze in pots/cube trays up to 1 month.',reheat:'Microwave covered 60–90 s with splash of water, stir, check temp.',safety:'Check texture & bones; no salt.'}}
 function ck(k,v){checks[k]=v;save()}
+// ---- editable shopping list ----
+const CATS=['Meat & fish','Fruit & veg','Dairy & eggs','Pantry','Other'];
+const shopEd=JSON.parse(localStorage.getItem('lb_shop')||'{}');const GEN={},SH={};let shEditing=null;
+function saveShop(){localStorage.setItem('lb_shop',JSON.stringify(shopEd))}
+function catOf(n){n=n.toLowerCase();if(/beef|pork|chicken|threadfin|salmon|sardine|fish|tofu|lentil/.test(n))return CATS[0];if(/egg|yogurt|milk|cheese|butter\b/.test(n)&&!/peanut|almond/.test(n))return CATS[2];if(/rice|oat|bread|crumb|tahini|peanut|almond|oil/.test(n))return CATS[3];return CATS[1]}
+function edFor(wk){return shopEd[wk]||(shopEd[wk]={edits:{},deleted:{},added:[]})}
+function shopItems(wk){const tot=GEN[wk]||{},ed=shopEd[wk]||{edits:{},deleted:{},added:[]},out=[];
+ Object.entries(tot).sort().forEach(([it,q])=>{if(ed.deleted[it])return;const e=ed.edits[it]||{};const base=it.replace(/\s*\(.*\)/,''),unit=(it.match(/\((.*)\)/)||['',''])[1];
+  out.push({key:it,gen:true,edited:!!ed.edits[it],name:e.name!=null?e.name:base,qty:e.qty!=null?e.qty:String(Math.ceil(q*10)/10),unit:e.unit!=null?e.unit:unit,cat:e.cat||catOf(base)})});
+ ed.added.forEach(a=>out.push({key:'add:'+a.id,gen:false,name:a.name,qty:a.qty||'',unit:a.unit||'',cat:a.cat||catOf(a.name)}));return out}
+function shopHTML(wk){const items=shopItems(wk);SH[wk]=items;const opt=c=>CATS.map(x=>`<option ${x===c?'selected':''}>${x}</option>`).join('');let h='';
+ CATS.forEach(c=>{const rows=items.map((it,i)=>[it,i]).filter(([it])=>it.cat===c);if(!rows.length)return;h+=`<h4>${c}</h4>`;
+  rows.forEach(([it,i])=>{const ck_=wk+'|'+it.key;if(shEditing===ck_){h+=`<div class="sef"><input class="full" id="se_n" value="${esc(it.name)}" aria-label="Item"><input id="se_q" value="${esc(it.qty)}" placeholder="Qty" aria-label="Quantity" inputmode="decimal"><input id="se_u" value="${esc(it.unit)}" placeholder="Unit" aria-label="Unit"><select class="full" id="se_c">${opt(it.cat)}</select><div class="row"><button class="btn p" onclick="shSave('${wk}',${i})">Save</button><button class="btn" onclick="shDel('${wk}',${i})">Delete</button>${it.edited?`<button class="btn" onclick="shRevert('${wk}',${i})">Undo edit</button>`:''}<button class="btn" onclick="shEditing=null;render()">Cancel</button></div></div>`;return}
+   h+=`<div class="si ${checks[ck_]?'done':''}"><input type="checkbox" ${checks[ck_]?'checked':''} onchange="ck('${esc(ck_)}',this.checked);this.parentNode.classList.toggle('done',this.checked)" aria-label="Got it"><span class="st" onclick="shEdit('${wk}',${i})">${esc(it.name)}${it.qty?`: <b>${esc(it.qty)}</b> ${esc(it.unit)}`:''}${it.edited?'<small>edited</small>':''}${it.gen?'':'<small>added</small>'}</span><button class="ib" onclick="shDel('${wk}',${i})" aria-label="Remove">✕</button></div>`})});
+ h+=`<h4>Add item</h4><div class="sef"><input class="full" id="sa_n_${wk}" placeholder="e.g. cherry tomatoes" aria-label="New item"><input id="sa_q_${wk}" placeholder="Qty (optional)" aria-label="Quantity"><select id="sa_c_${wk}"><option value="">Auto category</option>${opt('')}</select><div class="row"><button class="btn p" onclick="shAdd('${wk}')">＋ Add</button></div></div>`;return h}
+function shEdit(wk,i){shEditing=wk+'|'+SH[wk][i].key;render();const n=document.getElementById('se_n');n&&n.focus&&n.focus()}
+function shSave(wk,i){const it=SH[wk][i],ed=edFor(wk),v=id=>document.getElementById(id).value.trim();const name=v('se_n')||it.name,qty=v('se_q'),unit=v('se_u'),cat=v('se_c');
+ if(it.gen)ed.edits[it.key]={name,qty,unit,cat};else Object.assign(ed.added.find(a=>'add:'+a.id===it.key),{name,qty,unit,cat});shEditing=null;saveShop();render()}
+function shRevert(wk,i){delete edFor(wk).edits[SH[wk][i].key];shEditing=null;saveShop();render()}
+function shDel(wk,i){const it=SH[wk][i],ed=edFor(wk);if(it.gen)ed.deleted[it.key]=1;else ed.added=ed.added.filter(a=>'add:'+a.id!==it.key);delete checks[wk+'|'+it.key];shEditing=null;saveShop();save();render()}
+function shAdd(wk){const g=id=>document.getElementById(id+wk).value.trim();const name=g('sa_n_');if(!name)return;const ed=edFor(wk);ed.added.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name,qty:g('sa_q_'),unit:'',cat:g('sa_c_')||catOf(name)});saveShop();render()}
+function shReset(wk){if(typeof confirm==='function'&&!confirm('Reset this week\'s shopping list to the generated list? Your edits, additions and ticks will be cleared.'))return;delete shopEd[wk];Object.keys(checks).forEach(k=>{if(k.startsWith(wk+'|'))delete checks[k]});shEditing=null;saveShop();save();render()}
 function clearCk(wk){Object.keys(checks).forEach(k=>{if(k.startsWith(wk))delete checks[k]});save();render()}
 function close_(){document.getElementById('modal').classList.remove('show')}
 document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')close_()};
