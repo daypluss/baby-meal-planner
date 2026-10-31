@@ -229,9 +229,14 @@ function shReset(wk){if(typeof confirm==='function'&&!confirm('Reset this week\'
 function clearCk(wk){Object.keys(checks).forEach(k=>{if(k.startsWith(wk))delete checks[k]});save();render()}
 function close_(){document.getElementById('modal').classList.remove('show')}
 document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')close_()};
+function nice(v){const r=Math.round(v*4)/4;if(Math.abs(r-v)<0.13||v<3){const w=Math.floor(r),f=r-w,fr={0:'',0.25:'¼',0.5:'½',0.75:'¾'}[f];return r<0.25?'a pinch / ¼':(w?w:'')+(fr||'')||'0'}return String(Math.round(v))}
+function ingHTML(r,d){const bat=r.batch||['blw','porridge','stew'].includes(r.t)||['b2','b4','b5','b8','b9','b10','b14'].includes(r.id);
+ if(r.batch||!bat)return `<h3>Ingredients (${r.batch?'whole batch':'1 serving'})</h3><ul>${r.ing.map(([i,q])=>`<li>${q} × ${i}</li>`).join('')}</ul>`;
+ let n=0;days(monday(d)).forEach(x=>KEYS.forEach(k=>{const y=mealFor(x,k);if(y.id===r.id)n++}));if(!n)n=7;
+ return `<h3>Ingredients — whole batch (${n} portions${r.t==='blw'?', ≈'+n*3+' pieces':''})</h3><ul>${r.ing.map(([i,q])=>{const u=(i.match(/\(([^)]*)\)\s*$/)||[])[1],b=i.replace(/\s*\([^)]*\)\s*$/,'');return `<li><b>${nice(q*n)}${u?' '+u:''}</b> ${u?b:'× '+b}</li>`}).join('')}</ul>`}
 function openMeal(ds,k){const d=new Date(ds+'T00:00');const x=mealFor(d,k);const sh=document.getElementById('sheet');
  let body;if(x.id){const r=byId[x.id];body=`<h2>${r.name}</h2><div class="sub">${T[k]||k} · ${fmt(d,{weekday:'long',day:'numeric',month:'short'})}</div>
- ${r.t==='porridge'?`<h3>Porridge formula</h3><div class="box">🍚 <b>Rice</b> + 🍗 <b>${r.pr}</b> (protein/iron) + 🥦 <b>${r.vg}</b> (veg / vitamin C booster)</div>`:''}<h3>Ingredients (${r.batch?'whole batch':'1 serving'})</h3><ul>${r.ing.map(([i,q])=>`<li>${q} × ${i}</li>`).join('')}</ul>
+ ${r.t==='porridge'?`<h3>Porridge formula</h3><div class="box">🍚 <b>Rice</b> + 🍗 <b>${r.pr}</b> (protein/iron) + 🥦 <b>${r.vg}</b> (veg / vitamin C booster)</div>`:''}${ingHTML(r,d)}
  <h3>Steps</h3><ol>${r.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
  <h3>Batch & freeze</h3><div class="box">${r.freeze}</div><h3>Microwave reheat</h3><div class="box">${r.reheat}</div><h3>Size & safety</h3><div class="box">${r.safety} Never add salt, sugar or honey.</div>${r.src?`<h3>Source / inspiration</h3><ul>${r.src.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join('')}</ul>`:''}`}
  else body=`<h2>${esc(x.text)}</h2><div class="sub">${T[k]||k} · custom meal</div>`;
