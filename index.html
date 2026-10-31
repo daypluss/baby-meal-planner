@@ -208,9 +208,11 @@ const shopEd=JSON.parse(localStorage.getItem('lb_shop')||'{}');const GEN={},SH={
 function saveShop(){localStorage.setItem('lb_shop',JSON.stringify(shopEd))}
 function catOf(n){n=n.toLowerCase();if(/beef|pork|chicken|threadfin|salmon|sardine|fish|tofu|lentil|prawn|shrimp/.test(n))return CATS[0];if(/egg|yogurt|milk|chees|cheddar|butter\b/.test(n)&&!/peanut|almond/.test(n))return CATS[2];if(/rice|oat|bread|crumb|tahini|peanut|almond|oil|flour|sesame|chickpea/.test(n))return CATS[3];return CATS[1]}
 function edFor(wk){return shopEd[wk]||(shopEd[wk]={edits:{},deleted:{},added:[]})}
+const EXTRA={'2026-11-02':[['Broccoli (family, from helper)','1 head','Fruit & veg'],['Napa cabbage','1 head','Fruit & veg'],['Eggplant','1','Fruit & veg'],['Spring onion','1 bunch','Fruit & veg'],['Tomato (family, from helper)','2 pcs','Fruit & veg'],['Pears for baby (ripe, serve chilled)','3','Fruit & veg'],['Blueberries for baby (squash before serving)','1 punnet','Fruit & veg'],['Frozen beef balls','1 pack','Meat & fish'],['Sambal belacan','1 jar','Pantry'],['Laundry detergent (adult)','1','Other'],['Clorox ToiletWand refills','1 pack','Other']]};
 function shopItems(wk){const tot=GEN[wk]||{},ed=shopEd[wk]||{edits:{},deleted:{},added:[]},out=[];
  Object.entries(tot).sort().forEach(([it,q])=>{if(ed.deleted[it])return;const e=ed.edits[it]||{};const base=it.replace(/\s*\(.*\)/,''),unit=(it.match(/\((.*)\)/)||['',''])[1];
   out.push({key:it,gen:true,edited:!!ed.edits[it],name:e.name!=null?e.name:base,qty:e.qty!=null?e.qty:String(Math.ceil(q*10)/10),unit:e.unit!=null?e.unit:unit,cat:e.cat||catOf(base)})});
+ (EXTRA[wk]||[]).forEach(([n,q,c])=>{const k='x:'+n;if(ed.deleted[k])return;const e=ed.edits[k]||{};out.push({key:k,gen:true,edited:!!ed.edits[k],name:e.name!=null?e.name:n,qty:e.qty!=null?e.qty:q,unit:e.unit!=null?e.unit:'',cat:e.cat||c})});
  ed.added.forEach(a=>out.push({key:'add:'+a.id,gen:false,name:a.name,qty:a.qty||'',unit:a.unit||'',cat:a.cat||catOf(a.name)}));return out}
 function shopHTML(wk){const items=shopItems(wk);SH[wk]=items;const opt=c=>CATS.map(x=>`<option ${x===c?'selected':''}>${x}</option>`).join('');let h='';
  CATS.forEach(c=>{const rows=items.map((it,i)=>[it,i]).filter(([it])=>it.cat===c);if(!rows.length)return;h+=`<h4>${c}</h4>`;
